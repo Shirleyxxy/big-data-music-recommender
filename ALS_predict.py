@@ -6,7 +6,7 @@
 # PYSPARK_PYTHON=$(which python) pyspark
 
 # To run: 
-# spark-submit ALS_train.py hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/val_als.model
+# spark-submit ALS_train.py hdfs:/user/nhl256/cf_test_transformed.parquet hdfs:/user/nhl256/val_als.model
 
 
 import sys
@@ -23,20 +23,13 @@ def main(spark, data_file, model_file):
     
     df = spark.read.parquet(data_file)
     
-    # Try with sample of 10% of data first
-    df = df.sample(False, 0.1)
+    model = MatrixFactorizationModel.load(model_file)
+    
+    # Transform data_file - A Ratings object is made up of (user, item, rating)
+    predD_input = df.rdd.map(lambda x: Rating(int(x[4]), int(x[5])))
+    pred = model.predictAll(pred_input) 
     
     
-    # A Ratings object is made up of (user, item, rating)
-    ratings = df.rdd.map(lambda x: Rating(int(x[4]), int(x[5]), float(x[1])))
-    
-    #Setting up the parameters for ALS
-    rank = 5 # Latent Factors to be made
-    numIterations = 10 # Times to repeat process
-    #Create the model on the training data
-    model = ALS.trainImplicit(ratings, rank, numIterations)
-    
-    model.save(model_file)
 
 if __name__ == '__main__':
     
