@@ -13,6 +13,7 @@ from pyspark.sql import Row
 from pyspark.ml.feature import StringIndexer
 from pyspark.ml import Pipeline
 from pyspark.mllib.recommendation import ALS, MatrixFactorizationModel, Rating
+from pyspark.ml.feature import VectorAssembler
 
 
 def main(spark, data_file, model_file):
@@ -20,11 +21,16 @@ def main(spark, data_file, model_file):
     df = spark.read.parquet(data_file)
     
     # Try with sample of 10% of data first
-    df = df.sample(False, 0.1)
+    #df = df.sample(False, 0.1)
     
     # A Ratings object is made up of (user, item, rating)
-    df = df.rdd.map(lambda l: l.split('\t'))
-    ratings = df.map(lambda x: Rating(int(x[4]), int(x[5]), float(x[1])))
+    #columns = ['user_label', 'track_label', 'count']
+    #assembler = VectorAssembler( inputCols=columns, outputCol="features")
+    #training = assembler.transform(df)
+    
+    # A Ratings object is made up of (user, item, rating)
+    #df = df.rdd.map(lambda l: l.split('\t'))
+    ratings = df.rdd.map(lambda x: Rating(int(x[4]), int(x[5]), float(x[1])))
     
     #Setting up the parameters for ALS
     rank = 5 # Latent Factors to be made
