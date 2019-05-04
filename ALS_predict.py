@@ -29,6 +29,18 @@ def main(spark, data_file, model_file):
     predD_input = df.rdd.map(lambda x: Rating(int(x[4]), int(x[5])))
     pred = model.predictAll(pred_input) 
     
+    #Organize the data to make (user, product) the key)
+    true_reorg = df.rdd.map(lambda x:((x[4], x[5]), x[1]))
+    pred_reorg = pred.map(lambda x:((x[4],x[5]), x[2]))
+
+    #Do the actual join
+    true_pred = true_reorg.join(pred_reorg)
+
+    #Need to be able to square root the Mean-Squared Error
+    from math import sqrt
+
+    MSE = true_pred.map(lambda r: (r[1][0] - r[1][1])**2).mean()
+    RMSE = sqrt(MSE)#Results in 0.7629908117414474
     
 
 if __name__ == '__main__':

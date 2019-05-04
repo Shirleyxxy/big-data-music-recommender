@@ -6,7 +6,7 @@
 # PYSPARK_PYTHON=$(which python) pyspark
 
 # To run: 
-# spark-submit ALS_train.py hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/val_als.model
+# spark-submit ALS_train.py hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/train_als_val_small.model
 
 
 import sys
@@ -36,7 +36,7 @@ def main(spark, data_file, model_file):
     #Create the model on the training data
     model = ALS.trainImplicit(ratings, rank, numIterations)
     
-    model.save(model_file)
+    model.save(spark, model_file)
 
 if __name__ == '__main__':
     
