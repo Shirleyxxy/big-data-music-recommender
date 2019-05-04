@@ -11,7 +11,7 @@ from pyspark.ml import Pipeline
 # train_file = 'hdfs:/user/bm106/pub/project/cf_train.parquet'
 # val_file = 'hdfs:/user/bm106/pub/project/cf_validation.parquet'
 # test_file = 'hdfs:/user/bm106/pub/project/cf_test.parquet'
-# train_output_file = 'hdfs:/user/nhl256/cf_train_transformed.parquet'
+# train_output_file = 'hdfs:/user/nhl256/cf_train_transformed_v2.parquet'
 # val_output_file = 'hdfs:/user/nhl256/cf_val_transformed.parquet'
 # test_output_file = 'hdfs:/user/nhl256/cf_test_transformed.parquet'
 
