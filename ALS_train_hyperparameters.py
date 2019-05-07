@@ -15,17 +15,26 @@ from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from pyspark.ml.feature import StringIndexer
 from pyspark.ml import Pipeline
-from pyspark.mllib.recommendation import ALS, MatrixFactorizationModel, Rating
 from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.ml.recommendation import ALS
+# from pyspark.mllib.recommendation import ALS, MatrixFactorizationModel, Rating
 
 
-def main(spark, data_file, model_file):
+
+def main(spark, train_file, val_file, model_file):
     
-    df = spark.read.parquet(data_file)
+    train = spark.read.parquet(train_file)
+    val = spark.read.parquet(val_file)
+    
+    # A Ratings object is made up of (user, item, rating)
+    train_ratings = train.rdd.map(lambda x: Rating(int(x[4]), int(x[5]), float(x[1])))
+    val_ratings = val.rdd.map(lambda x: Rating(int(x[4]), int(x[5]), float(x[1])))
+    
+    ####### Archived work using MLLiB ###########
     
     # Try with sample of 10% of data first
     df = df.sample(False, 0.1)
-    
     
     # A Ratings object is made up of (user, item, rating)
     ratings = df.rdd.map(lambda x: Rating(int(x[4]), int(x[5]), float(x[1])))
@@ -36,7 +45,7 @@ def main(spark, data_file, model_file):
     #Create the model on the training data
     model = ALS.trainImplicit(ratings, rank, numIterations)
     
-    model.save(spark, model_file)
+    model.save(spark.SparkContext, model_file)
 
 if __name__ == '__main__':
     
@@ -44,11 +53,12 @@ if __name__ == '__main__':
     spark = SparkSession.builder.appName('ALS_train').getOrCreate()
 
     # Get the filename from the command line
-    data_file = sys.argv[1]
+    train_file = sys.argv[1]
+    val_file = sys.argv[2]
 
     # And the location to store the trained model
-    model_file = sys.argv[2]
+    model_file = sys.argv[3]
 
     # Call our main routine
-    main(spark, data_file, model_file)
+    main(spark, train_file, val_file, model_file)
 

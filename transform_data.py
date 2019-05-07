@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
+from pyspark import SparkContext
+from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from pyspark.ml.feature import StringIndexer
@@ -24,6 +25,11 @@ def main(spark, train_file, val_file, test_file, train_output_file,
     val_data = spark.read.parquet(val_file)
     test_data = spark.read.parquet(test_file)
     
+    # Drop '__index_level_0__' columns 
+    train_data = train_data.drop('__index_level_0__')
+    val_data = val_data.drop('__index_level_0__')
+    test_data = test_data.drop('__index_level_0__')
+    
     
     user_indexer = StringIndexer(inputCol = 'user_id', outputCol = 'user_label', handleInvalid = 'skip')
     track_indexer = StringIndexer(inputCol = 'track_id', outputCol = 'track_label', handleInvalid = 'skip')
@@ -39,10 +45,18 @@ def main(spark, train_file, val_file, test_file, train_output_file,
     test_model = indexer_pipeline.fit(test_data)
     test_data = test_model.transform(test_data)
     
+    # Make sure that train, val, and test have been transformed 
     print(train_data.take(1))
     print(val_data.take(1))
     print(test_data.take(1))
+    
+    # repartition the data frame prior to writing (fix for java.lang.OutOfMemoryError)
+    
+    train_data = train_data.repartition(5000, 'user_label')
+    val_data = val_data.repartition('user_label')
+    test_data = test_data.repartition('user_label')
 
+    # write the transformed data files
     train_data.write.parquet(train_output_file)
     val_data.write.parquet(val_output_file)
     test_data.write.parquet(test_output_file)
@@ -50,20 +64,24 @@ def main(spark, train_file, val_file, test_file, train_output_file,
 
 if __name__ == '__main__':
     
-    # Create the spark session object
-    spark = SparkSession.builder.appName('transform_data').getOrCreate()
+    conf = SparkConf()
+    conf.set('spark.executor.memory', '16g')
+    conf.set('spark.driver.memory', '16g')
+    conf.set('spark.default.parallelism', '4')
 
-    # Get the filename from the command line
+    # create the spark session object
+    spark = SparkSession.builder.config(conf = conf).appName('preprocessing').getOrCreate()
+
+    # paths for the original files
     train_file = sys.argv[1]
     val_file = sys.argv[2]
     test_file = sys.argv[3]
 
-    # And the location to store the transformed file
+    # paths to store the transformed files
     train_output_file = sys.argv[4]
     val_output_file = sys.argv[5]
     test_output_file = sys.argv[6]
-
-
+    
 
     #Call the main function
     main(spark, train_file, val_file, test_file, train_output_file, 
