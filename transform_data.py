@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# module load python/gnu/3.6.5
+# module load spark/2.4.0
 
 import sys
 from pyspark import SparkContext
@@ -12,11 +14,11 @@ from pyspark.ml import Pipeline
 # train_file = 'hdfs:/user/bm106/pub/project/cf_train.parquet'
 # val_file = 'hdfs:/user/bm106/pub/project/cf_validation.parquet'
 # test_file = 'hdfs:/user/bm106/pub/project/cf_test.parquet'
-# train_output_file = 'hdfs:/user/nhl256/cf_train_transformed_v2.parquet'
-# val_output_file = 'hdfs:/user/nhl256/cf_val_transformed.parquet'
-# test_output_file = 'hdfs:/user/nhl256/cf_test_transformed.parquet'
+# train_output_file = 'hdfs:/user/nhl256/cf_train_transformed_v4.parquet'
+# val_output_file = 'hdfs:/user/nhl256/cf_val_transformed_v1.parquet'
+# test_output_file = 'hdfs:/user/nhl256/cf_test_transformed_v1.parquet'
 
-## Command to run: spark-submit transform_data.py hdfs:/user/bm106/pub/project/cf_train.parquet hdfs:/user/bm106/pub/project/cf_validation.parquet hdfs:/user/bm106/pub/project/cf_test.parquet hdfs:/user/nhl256/cf_train_transformed.parquet hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/cf_test_transformed.parquet
+## Command to run: spark-submit --driver-memory 16g --executor-memory 16g transform_data.py hdfs:/user/bm106/pub/project/cf_train.parquet hdfs:/user/bm106/pub/project/cf_validation.parquet hdfs:/user/bm106/pub/project/cf_test.parquet hdfs:/user/nhl256/cf_train_transformed_v5.parquet hdfs:/user/nhl256/cf_val_transformed_v2.parquet hdfs:/user/nhl256/cf_test_transformed_v2.parquet
 
 def main(spark, train_file, val_file, test_file, train_output_file, 
          val_output_file, test_output_file):
@@ -38,12 +40,8 @@ def main(spark, train_file, val_file, test_file, train_output_file,
     
     train_model = indexer_pipeline.fit(train_data)
     train_data = train_model.transform(train_data)
-   
-    val_model = indexer_pipeline.fit(val_data)
-    val_data = val_model.transform(val_data)
-
-    test_model = indexer_pipeline.fit(test_data)
-    test_data = test_model.transform(test_data)
+    val_data = train_model.transform(val_data)
+    test_data = train_model.transform(test_data)
     
     # Make sure that train, val, and test have been transformed 
     print(train_data.take(1))
