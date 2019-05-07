@@ -14,9 +14,6 @@ def main(spark, model_file, test_file):
     test_df = spark.read.parquet(test_file)
     test_df = test_df.select('user_label', 'track_label', 'count')
     
-    #test_rdd = test_df.rdd.map(lambda x: (int(x[0]), int(x[1]), int(x[2])))
- 
-
     #predictions = model.recommendProductsForUsers(500)
     predictions = model.recommendProductsForUsers(2)
     prediction_flat = predictions.flatMap(lambda p: p[1])
@@ -24,9 +21,9 @@ def main(spark, model_file, test_file):
     intersections = prediction_df.join(test_df, (prediction_df.product == test_df.track_label)&
                                       (prediction_df.user == test_df.user_label), how = 'inner')
     predLabel = intersections.select('rating', 'count')
-    predLabel_rdd = predLabel.map(lambda x: (x[0], x[1]))
+    predLabel_rdd = predLabel.rdd.map(lambda x: Row(x[0], x[1]))
     metrics = RankingMetrics(predLabl_rdd) 
-    print(metrics.precisionAt(2))
+    print(metrics.meanAveragePrecision)
 
 if __name__ == '__main__':
     spark = SparkSession.builder.appName('modeling').getOrCreate()
