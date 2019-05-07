@@ -6,7 +6,7 @@
 # PYSPARK_PYTHON=$(which python) pyspark
 
 # To run: 
-# spark-submit ALS_train.py hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/train_als_val_small.model
+# spark-submit ALS_train.py hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/cf_test_transformed.parquet hdfs:/user/nhl256/train_als_val_small.model
 
 
 import sys
@@ -76,23 +76,8 @@ def main(spark, train_file, val_file, model_file):
     print('Best alpha:', best_alpha)
     print('Best rmse:', best_rmse)
     
-    # # save the best model
+    # save the best model
     best_model.save(model_file)
-    
-for rank, alpha, reg_param in itertools.product(ranks, alphas, reg_params):
-...     als = ALS(maxIter = 5, regParam = reg_param, implicitPrefs = True, alpha = alpha, rank =rank, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
-...     model = als.fit(train_df)
-...     val_preds  = model.transform(val_df)
-...     rmse = evaluator.evaluate(val_preds)
-...     print('Current rank:', rank)
-...     print('Currnt param:', reg_param)
-...     print('Current alpha:', alpha)
-...     if rmse < best_rmse:
-...             best_rank = rank
-...             best_reg_param = reg_param
-...             best_alpha = alpha
-...             best_model = model
-...             best_rmse = rmse
 
     
 #     ####### Archived work using MLLiB ###########
