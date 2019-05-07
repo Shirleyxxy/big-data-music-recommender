@@ -3,6 +3,8 @@
 
 import sys
 
+from pyspark import SparkContext
+from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from pyspark.ml.feature import StringIndexer
@@ -47,34 +49,27 @@ def main(spark, train_file, val_file, test_file, train_output_file,
     test_data = test_model.transform(test_data)
 
     # repartition the data frame prior to writing (fix for java.lang.OutOfMemoryError)
-    #train_data = train_data.repartition(100000, 'user_label')
-    #val_data = val_data.repartition(1000, 'user_label')
-    #test_data = test_data.repartition(10000, 'user_label')
 
-    # downsampling
-    train_small = train_data.sample(withReplacement = False, fraction = 0.00002, seed = 14)
-    val_small = val_data.sample(withReplacement = False, fraction = 0.05, seed = 14)
-    test_small = test_data.sample(withReplacement = False, fraction = 0.01 , seed = 14)
-    
-    train_small = train_small.repartition('user_label')
-    val_small = val_small.repartition('user_label')
-    test_small = test_small.repartition('user_label') 
-    
-    print(train_small.count(), val_small.count(), test_small.count()) 
+    #print('Number of partitions for the training data:', train_data.rdd.getNumPartitions())
+    train_data = train_data.repartition(5000, 'user_label')
+    val_data = val_data.repartition('user_label')
+    test_data = test_data.repartition('user_label')
 
     # write the transformed data files
-    #train_data.write.parquet(train_output_file)
-    #val_data.write.parquet(val_output_file)
-    #test_data.write.parquet(test_output_file)
-    train_small.write.parquet(train_output_file)
-    val_small.write.parquet(val_output_file)
-    test_small.write.parquet(test_output_file)
+    train_data.write.parquet(train_output_file)
+    val_data.write.parquet(val_output_file)
+    test_data.write.parquet(test_output_file)
 
 
 if __name__ == '__main__':
 
+    conf = SparkConf()
+    conf.set('spark.executor.memory', '16g')
+    conf.set('spark.driver.memory', '16g')
+    conf.set('spark.default.parallelism', '4')
+
     # create the spark session object
-    spark = SparkSession.builder.appName('transform_data').getOrCreate()
+    spark = SparkSession.builder.config(conf = conf).appName('preprocessing').getOrCreate()
 
     # paths for the original files
     train_file = sys.argv[1]
