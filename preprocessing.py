@@ -41,12 +41,8 @@ def main(spark, train_file, val_file, test_file, train_output_file,
 
     train_model = indexer_pipeline.fit(train_data)
     train_data = train_model.transform(train_data)
-
-    val_model = indexer_pipeline.fit(val_data)
-    val_data = val_model.transform(val_data)
-
-    test_model = indexer_pipeline.fit(test_data)
-    test_data = test_model.transform(test_data)
+    val_data = train_model.transform(val_data)
+    test_data = train_model.transform(test_data)
 
     # repartition the data frame prior to writing (fix for java.lang.OutOfMemoryError)
 
