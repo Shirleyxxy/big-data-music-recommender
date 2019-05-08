@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#module load python/gnu/3.6.5
-#module load spark/2.4.0
+# module load python/gnu/3.6.5
+# module load spark/2.4.0
 # PYSPARK_PYTHON=$(which python) pyspark
 
 # To run: 
