@@ -58,8 +58,9 @@ def main(spark, test_file, model_file):
 if __name__ == '__main__':
     
     # Create the spark session object
-    sc = spark.sparkContext
+    
     spark = SparkSession.builder.appName('ALS_train').getOrCreate()
+    sc = spark.sparkContext
 
     # Get the filename from the command line
     data_file = sys.argv[1]
