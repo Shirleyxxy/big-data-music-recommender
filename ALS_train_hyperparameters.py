@@ -8,7 +8,7 @@
 # To run: 
 #full train: spark-submit ALS_train.py cf_train_transformed_v8.parquet cf_val_transformed_v1.parquet hdfs:/user/nhl256/als_train.model
 
-# spark-submit ALS_train.py hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/cf_test_transformed.parquet hdfs:/user/nhl256/train_als_val_small.model
+# spark-submit --driver-memory 16g --executor-memory 16g ALS_train.py hdfs:/user/nhl256/cf_val_transformed.parquet hdfs:/user/nhl256/cf_test_transformed.parquet hdfs:/user/nhl256/train_tune_v1.model
 
 
 import sys
@@ -56,18 +56,17 @@ def main(spark, train_file, val_file, model_file):
     # MAP
     print("MAP = %s" % ranking_metrics.meanAveragePrecision)
     
-    
 
     
     ################## Hyper-parameters tunning ##################
-    ranks = [10, 20]
-    reg_params = [0.001, 0.005]
-    alphas = [0.25]
+    ranks = [10, 20] #the number of features to use (also referred to as the number of latent factors).
+    reg_params = [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5] #specifies the regularization parameter in ALS.
+    alphas = [0.25, 0.4 ] #a parameter applicable to the implicit feedback variant of ALS that governs the baseline confidence in preference observations.
     best_rank = None
     best_reg_param = None
     best_alpha = None
     best_model = None
-    best_map = 1e9
+    best_map = 0
     
     for rank, alpha, reg_param in itertools.product(ranks, alphas, reg_params):
         als = ALS(maxIter = 5, regParam = reg_param, implicitPrefs = True, alpha = alpha, rank =rank, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
@@ -92,7 +91,7 @@ def main(spark, train_file, val_file, model_file):
         print('Current rank:', rank)
         print('Current alpha:', alpha)
         print('Current reg:', reg_param) 
-        if map < best_map:
+        if map > best_map:
             best_rank = rank
             best_reg_param = reg_param
             best_alpha = alpha
