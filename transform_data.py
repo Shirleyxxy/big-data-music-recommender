@@ -50,15 +50,19 @@ def main(spark, train_file, val_file, test_file, meta_file, train_output_file,
 
     train_data = user_model.transform(train_subset)
     train_data = track_model.transform(train_data)
+    print('Finish transforming train data')
 
     val_data = user_model.transform(val_data)
     val_data = track_model.transform(val_data)
+    print('Finish transforming val data')
 
     test_data = user_model.transform(test_data)
     test_data = track_model.transform(test_data)
+    print('Finish transforming test data')
 
     # Make sure that train, val, and test have been transformed
     print(train_data.take(1))
+    print(train_data.count())
     print(val_data.take(1))
     print(test_data.take(1))
 
@@ -70,8 +74,11 @@ def main(spark, train_file, val_file, test_file, meta_file, train_output_file,
 
     # write the transformed data files
     train_data.write.parquet(train_output_file)
+    print('finish writing train')
     val_data.write.parquet(val_output_file)
+    print('finish writing val')
     test_data.write.parquet(test_output_file)
+    print('finish writing test')
 
 
 if __name__ == '__main__':
