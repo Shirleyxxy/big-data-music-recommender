@@ -59,9 +59,12 @@ def main(spark, train_file, val_file, model_file):
 
     
     ################## Hyper-parameters tunning ##################
-    ranks = [10, 20] #the number of features to use (also referred to as the number of latent factors).
-    reg_params = [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5] #specifies the regularization parameter in ALS.
-    alphas = [0.25, 0.4 ] #a parameter applicable to the implicit feedback variant of ALS that governs the baseline confidence in preference observations.
+    ranks = [10, 20, 40, 60] #the number of features to use (also referred to as the number of latent factors).
+    # Nhung reg_params = 0, 0.001
+    # Shirley reg_params = 0.005, 0.01, 0.05
+    # Iris reg_params = 0.1, 0.5
+    reg_params = [0, 0.001] #specifies the regularization parameter in ALS.
+    alphas = [0.10, 0.20, 0.4] #a parameter applicable to the implicit feedback variant of ALS that governs the baseline confidence in preference observations.
     best_rank = None
     best_reg_param = None
     best_alpha = None
