@@ -35,7 +35,7 @@ def main(spark, train_file, val_file, test_file, meta_file, train_output_file,
     test_data = test_data.drop('__index_level_0__')
 
     train_idx = train_data.select("*").withColumn("id", monotonically_increasing_id())
-    train_idx.creatOrReplaceTempView('train_idx')
+    train_idx.createOrReplaceTempView('train_idx')
     train_subset = spark.sql('SELECT * FROM train_idx ORDER BY train_idx.id DESC LIMIT 6000000')
 
     user_indexer = StringIndexer(inputCol = 'user_id', outputCol = 'user_label', handleInvalid = 'skip')
