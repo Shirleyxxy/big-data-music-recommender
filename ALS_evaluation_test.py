@@ -9,7 +9,6 @@
 # spark-submit ALS_train.py hdfs:/user/nhl256/cf_test_transformed.parquet hdfs:/user/nhl256/train_als_val_small.model
 
 
-
 import sys
 
 from pyspark.sql import SparkSession
