@@ -1,4 +1,7 @@
-mport sys
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
 import itertools
 from pyspark import SparkContext
 from pyspark import SparkConf
