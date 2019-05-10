@@ -7,7 +7,7 @@
 
 # To run: 
 
-# spark-submit --driver-memory 16g --executor-memory 16g ALS_train_hyperparameters.py cf_train_transformed_v9.parquet cf_val_transformed_v2.parquet hdfs:/user/nhl256/train_tune_v2.model
+# spark-submit --driver-memory 16g --executor-memory 16g ALS_train_hyperparameters.py hdfs:/user/nhl256/cf_train_transformed_v9.parquet hdfs:/user/nhl256/cf_val_transformed_v2.parquet hdfs:/user/nhl256/train_tune_v2.model
 
 
 import sys
@@ -22,9 +22,7 @@ import pyspark.sql.functions as F
 def main(spark, train_file, val_file, model_file):
 
     train_df = spark.read.parquet(train_file)
-    #train_df = spark.read.parquet('hdfs:/user/xx852/cf_train_small.parquet')
     val_df = spark.read.parquet(val_file)
-    #val_df = spark.read.parquet('hdfs:/user/xx852/cf_val_small.parquet')
     train_df = train_df.select('user_label', 'track_label', 'count')
     val_df = val_df.select('user_label', 'track_label', 'count')
     val_grouped = val_df.groupBy('user_label').agg(F.collect_list(F.col('track_label')).alias('track_label'))
@@ -56,6 +54,10 @@ def main(spark, train_file, val_file, model_file):
     best_map = 0
 
     for rank_i, alpha_i, reg_param_i in itertools.product(ranks, alphas, reg_params):
+        
+        print('Running on rank:', rank_i)
+        print('Running on alpha:', alpha_i)
+        print('Running on reg:', reg_param_i)
 
         als = ALS(maxIter = 5, regParam = reg_param_i, implicitPrefs = True, alpha = alpha_i,
                   rank = rank_i, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
@@ -70,9 +72,8 @@ def main(spark, train_file, val_file, model_file):
         rdd = val_pred.select('recommendations', 'track_label').rdd
         ranking_metrics = RankingMetrics(rdd)
         map_ = ranking_metrics.meanAveragePrecision
-        print('Current rank:', rank_i)
-        print('Current alpha:', alpha_i)
-        print('Current reg:', reg_param_i)
+
+        print('MAP:', map_)
 
         if map_ > best_map:
             best_rank = rank_i
