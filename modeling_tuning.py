@@ -3,6 +3,8 @@
 
 import sys
 import itertools
+from pyspark import SparkContext
+from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from pyspark.ml.recommendation import ALS
@@ -83,7 +85,12 @@ def main(spark, train_file, val_file, model_file):
 
 if __name__ == '__main__':
 
-    spark = SparkSession.builder.appName('modeling').getOrCreate()
+    conf = SparkConf()
+    conf.set('spark.executor.memory', '16g')
+    conf.set('spark.driver.memory', '16g')
+    conf.set('spark.default.parallelism', '4')
+
+    spark = SparkSession.builder.config(conf = conf).appName('modeling and tuning').getOrCreate()
 
     train_file = sys.argv[1]
     val_file = sys.argv[2]
