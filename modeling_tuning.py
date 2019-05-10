@@ -3,6 +3,8 @@
 
 import sys
 import itertools
+from pyspark import SparkContext
+from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from pyspark.ml.recommendation import ALS
@@ -38,7 +40,8 @@ def main(spark, train_file, val_file, model_file):
 
     # hyperparameter tuning
     ranks = [10, 20, 40, 60]
-    reg_params = [0.005, 0.01, 0.05]
+    #reg_params = [0.005, 0.01, 0.05]
+    reg_params = [0.01]
     alphas = [0.10, 0.20, 0.40]
     best_rank = None
     best_reg_param = None
@@ -64,6 +67,7 @@ def main(spark, train_file, val_file, model_file):
         print('Current rank:', rank_i)
         print('Current alpha:', alpha_i)
         print('Current reg:', reg_param_i)
+        print('Current map:', map_)        
 
         if map_ > best_map:
             best_rank = rank_i
@@ -83,7 +87,12 @@ def main(spark, train_file, val_file, model_file):
 
 if __name__ == '__main__':
 
-    spark = SparkSession.builder.appName('modeling').getOrCreate()
+    conf = SparkConf()
+    conf.set('spark.executor.memory', '16g')
+    conf.set('spark.driver.memory', '16g')
+    conf.set('spark.default.parallelism', '4')
+
+    spark = SparkSession.builder.config(conf = conf).appName('modeling and tuning').getOrCreate()
 
     train_file = sys.argv[1]
     val_file = sys.argv[2]
