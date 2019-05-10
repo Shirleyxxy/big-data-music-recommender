@@ -40,7 +40,8 @@ def main(spark, train_file, val_file, model_file):
 
     # hyperparameter tuning
     ranks = [10, 20, 40, 60]
-    reg_params = [0.005, 0.01, 0.05]
+    #reg_params = [0.005, 0.01, 0.05]
+    reg_params = [0.01]
     alphas = [0.10, 0.20, 0.40]
     best_rank = None
     best_reg_param = None
@@ -66,6 +67,7 @@ def main(spark, train_file, val_file, model_file):
         print('Current rank:', rank_i)
         print('Current alpha:', alpha_i)
         print('Current reg:', reg_param_i)
+        print('Current map:', map_)        
 
         if map_ > best_map:
             best_rank = rank_i
