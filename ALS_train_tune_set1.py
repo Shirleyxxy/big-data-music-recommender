@@ -28,11 +28,11 @@ def main(spark, train_file, val_file, model_file):
     val_grouped = val_df.groupBy('user_label').agg(F.collect_list(F.col('track_label')).alias('track_label'))
 
     # ALS for implicit feedback
-    als = ALS(maxIter = 5, regParam = 0.01, implicitPrefs = True, \
-          userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
+    als = ALS(maxIter = 5, regParam = 0, implicitPrefs = True, alpha = 0.4,
+                  rank = 20, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
 
     als_model = als.fit(train_df)
-    predictions = als_model.recommendForAllUsers(10)
+    predictions = als_model.recommendForAllUsers(100)
     prediction_df = predictions.rdd.map(lambda r: (r.user_label, [i[0] for i in r.recommendations])).toDF()
     prediction_df = prediction_df.selectExpr('_1 as user_label', '_2 as recommendations')
 
@@ -43,52 +43,54 @@ def main(spark, train_file, val_file, model_file):
     print('Before tuning, MAP = %s' % ranking_metrics.meanAveragePrecision)
 
 
-    # hyperparameter tuning
-    ranks = [10, 20]
-    reg_params = [0]
-    alphas = [0.10, 0.20, 0.40]
-    best_rank = None
-    best_reg_param = None
-    best_alpha = None
-    best_model = None
-    best_map = 0
+#     # hyperparameter tuning
+#     ranks = [10, 20]
+#     reg_params = [0]
+#     alphas = [0.10, 0.20, 0.40]
+#     best_rank = None
+#     best_reg_param = None
+#     best_alpha = None
+#     best_model = None
+#     best_map = 0
 
-    for rank_i, alpha_i, reg_param_i in itertools.product(ranks, alphas, reg_params):
+#     for rank_i, alpha_i, reg_param_i in itertools.product(ranks, alphas, reg_params):
         
-        print('Running on rank:', rank_i)
-        print('Running on alpha:', alpha_i)
-        print('Running on reg:', reg_param_i)
+#         print('Running on rank:', rank_i)
+#         print('Running on alpha:', alpha_i)
+#         print('Running on reg:', reg_param_i)
 
-        als = ALS(maxIter = 5, regParam = reg_param_i, implicitPrefs = True, alpha = alpha_i,
-                  rank = rank_i, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
+#         als = ALS(maxIter = 5, regParam = reg_param_i, implicitPrefs = True, alpha = alpha_i,
+#                   rank = rank_i, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
 
-        als_model = als.fit(train_df)
-        predictions = als_model.recommendForAllUsers(100)
-        prediction_df = predictions.rdd.map(lambda r: (r.user_label, [i[0] for i in r.recommendations])).toDF()
-        prediction_df = prediction_df.selectExpr('_1 as user_label', '_2 as recommendations')
+#         als_model = als.fit(train_df)
+#         predictions = als_model.recommendForAllUsers(100)
+#         prediction_df = predictions.rdd.map(lambda r: (r.user_label, [i[0] for i in r.recommendations])).toDF()
+#         prediction_df = prediction_df.selectExpr('_1 as user_label', '_2 as recommendations')
 
-        # Join table
-        val_pred = val_grouped.join(prediction_df, 'user_label', 'inner')
-        rdd = val_pred.select('recommendations', 'track_label').rdd
-        ranking_metrics = RankingMetrics(rdd)
-        map_ = ranking_metrics.meanAveragePrecision
+#         # Join table
+#         val_pred = val_grouped.join(prediction_df, 'user_label', 'inner')
+#         rdd = val_pred.select('recommendations', 'track_label').rdd
+#         ranking_metrics = RankingMetrics(rdd)
+#         map_ = ranking_metrics.meanAveragePrecision
 
-        print('MAP:', map_)
+#         print('MAP:', map_)
 
-        if map_ > best_map:
-            best_rank = rank_i
-            best_reg_param = reg_param_i
-            best_alpha = alpha_i
-            best_model = als_model
-            best_map = map_
+#         if map_ > best_map:
+#             best_rank = rank_i
+#             best_reg_param = reg_param_i
+#             best_alpha = alpha_i
+#             best_model = als_model
+#             best_map = map_
 
-    print('Best rank:', best_rank)
-    print('Best regParam:', best_reg_param)
-    print('Best alpha:', best_alpha)
-    print('Best map:', best_map)
+#     print('Best rank:', best_rank)
+#     print('Best regParam:', best_reg_param)
+#     print('Best alpha:', best_alpha)
+#     print('Best map:', best_map)
 
     # save the best model
-    best_model.save(model_file)
+    #best_model.save(model_file)
+    
+    als_model.save(model_file)
 
 
 if __name__ == '__main__':

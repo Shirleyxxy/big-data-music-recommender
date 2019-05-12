@@ -7,7 +7,7 @@
 
 # To run: 
 
-# spark-submit --driver-memory 16g --executor-memory 16g ALS_train_hyperparameters.py hdfs:/user/nhl256/cf_train_transformed_v9.parquet hdfs:/user/nhl256/cf_val_transformed_v2.parquet hdfs:/user/nhl256/train_tune_set1.model
+# spark-submit --driver-memory 16g --executor-memory 16g ALS_train_tune_set1.py hdfs:/user/nhl256/cf_train_transformed_v9.parquet hdfs:/user/nhl256/cf_val_transformed_v2.parquet hdfs:/user/nhl256/ALS_train_tune_set1.model
 
 
 import sys
