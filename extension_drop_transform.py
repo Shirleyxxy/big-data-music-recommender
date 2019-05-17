@@ -1,51 +1,63 @@
-mport sys
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
+from pyspark.ml.feature import StringIndexer
+from pyspark.sql.functions import monotonically_increasing_id
+## Will read in all original data and retransform the data
+## select only the counts > 5
+## train: 5184103 rows
+## val: 5,162 users
+## test: 51,551 users
 
-def main(spark, train_file, val_file, test_file, train_new_file, val_new_file, test_new_file):
+def main(spark, train_file, meta_file, train_new_file):
     train_data = spark.read.parquet(train_file)
-    val_data = spark.read.parquet(val_file)
-    test_data = spark.read.parque(test_file)
+    meta_data = spark.read.parquet(meta_file)
     print('Finishe reading all data')
 
-    train_new = train_data.select(train_data.count > 3)
-    val_new = val_data.select(val_data.count > 3 )
-    test_new = test_data.select(test_data.count > 3)
+    train_data.createOrReplaceTempView('train_data')
+    
+    train_data = spark.sql('SELECT * FROM train_data WHERE train_data.count > 2')
+    train_idx = train_data.select("*").withColumn("id", monotonically_increasing_id())
+    train_idx.createOrReplaceTempView('train_idx')
+    train_subset = spark.sql('SELECT * FROM train_idx ORDER BY train_idx.id DESC LIMIT 6000000')
     print('Finish dropping the low counts')
+   
+    user_indexer = StringIndexer(inputCol = 'user_id', outputCol = 'user_label', handleInvalid = 'skip')
+    track_indexer = StringIndexer(inputCol = 'track_id', outputCol = 'track_label', handleInvalid ='skip')
+    
+    user_model = user_indexer.fit(train_subset)
+    track_model = track_indexer.fit(meta_data)
+     
+    train_data = user_model.transform(train_subset)
+    train_data = track_model.transform(train_data)
+    print('Finish trasnforming train data') 
+   
+    print('The rows remained in train:', train_data.first())
+    train_data = train_data.repartition(5000, 'user_label')
 
-    train_new = train_new.repartition(5000, 'user_label')
-    val_new = val_new.repartition('user_label')
-    test_new = test_new.repartition('user_label')
-
-    train_new.write.parquet(train_new_file)
+    train_data.write.parquet(train_new_file)
     print('Finish writing training_data')
-    val_new.write.parquet(val_new_file)
-    print('Finish writing val_data')
-    test_new.write.parquet(test_new_file)
-    print('Finish writing test_data')
 
 if __name__ == '__main__':
 
     conf = SparkConf()
-    conf.set('spark.executor.memory', '16g')
-    conf.set('spark.driver.memory', '16g')
+    conf.set('spark.executor.memory', '8g')
+    conf.set('spark.driver.memory', '8g')
     conf.set('spark.default.parallelism', '4')
 
     # create the spark session object
-    spark = SparkSession.builder.config(conf = conf).appName('extension_log').getOrCreate()
+    spark = SparkSession.builder.config(conf = conf).appName('extension_drop').getOrCreate()
 
     # paths for the original files
     train_file = sys.argv[1]
-    val_file = sys.argv[2]
-    test_file = sys.argv[3]
-
+    meta_file = sys.argv[2]
     # paths to store the transformed files
-    train_new_file = sys.argv[4]
-    val_new_file = sys.argv[5]
-    test_new_file = sys.argv[6]
+    train_new_file = sys.argv[3]
 
     #Call the main function
-    main(spark, train_file, val_file, test_file, train_new_file,
-         val_new_file, test_new_file)
+    main(spark, train_file, meta_file, train_new_file)
 
