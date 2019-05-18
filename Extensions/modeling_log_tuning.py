@@ -21,14 +21,12 @@ def main(spark, train_file, val_file, model_file):
     train_df = train_df.withColumn('inc_count', train_df['count']+1)
     train_df = train_df.withColumn('log_count', F.log(train_df['inc_count']))
     
-    val_df = val_df.withColumn('inc_count', val_df['count'] +1)
-    val_df = val_df.withColumn('log_count', F.log(val_df['inc_count']))
     print('finish transforming data')
     print(train_df.first())
     print(val_df.first())
 
     train_df = train_df.select('user_label', 'track_label', 'log_count')
-    val_df = val_df.select('user_label', 'track_label', 'log_count')
+    val_df = val_df.select('user_label', 'track_label', 'count')
     val_grouped = val_df.groupBy('user_label').agg(F.collect_list(F.col('track_label')).alias('track_label'))
     print('finish preparing data') 
     
