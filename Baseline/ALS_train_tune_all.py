@@ -29,11 +29,10 @@ def main(spark, train_file, val_file, model_file):
 
     # ALS for implicit feedback
     als = ALS(maxIter = 5, regParam = 0, implicitPrefs = True, alpha = 0.4,
-                  rank = 60, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
-
+                  rank = 20, userCol = 'user_label', itemCol = 'track_label', ratingCol = 'count')
 
     als_model = als.fit(train_df)
-    predictions = als_model.recommendForAllUsers(10)
+    predictions = als_model.recommendForAllUsers(100)
     prediction_df = predictions.rdd.map(lambda r: (r.user_label, [i[0] for i in r.recommendations])).toDF()
     prediction_df = prediction_df.selectExpr('_1 as user_label', '_2 as recommendations')
 
@@ -45,8 +44,8 @@ def main(spark, train_file, val_file, model_file):
 
 
     # hyperparameter tuning
-    ranks = [40, 60]
-    reg_params = [0.001]
+    ranks = [10, 20, 40, 60]
+    reg_params = [0, 0.001, 0.01, 0.05]
     alphas = [0.10, 0.20, 0.40]
     best_rank = None
     best_reg_param = None
@@ -90,7 +89,6 @@ def main(spark, train_file, val_file, model_file):
 
     # save the best model
     best_model.save(model_file)
-    
 
 
 if __name__ == '__main__':
