@@ -45,7 +45,7 @@ def main(spark, train_file, val_file, model_file):
 
     # hyperparameter tuning
     ranks = [10, 20, 40, 60]
-    reg_params = [0, 0.001, 0.01, 0.05]
+    reg_params = [0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     alphas = [0.10, 0.20, 0.40]
     best_rank = None
     best_reg_param = None
